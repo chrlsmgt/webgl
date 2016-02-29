@@ -1,0 +1,36 @@
+body {
+	margin: 0;
+	overflow: hidden;
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+#WebGL-output {
+	width: 100%;
+	height: 100%;
+}
+
+#ascii {
+	position: absolute;
+	bottom: 40px;
+	left: 40px;
+	font-size: 16px;
+	line-height: 30px;
+	padding: 0 20px;
+	cursor: pointer;
+	border: 2px solid #a11212;	
+}
+
+#ascii:hover {
+	border-color: #15710c;
+}
+	
+	
+#ascii.on {
+	border-color: #15710c;
+}
+
+#ascii.on:hover {
+	border-color: #a11212;
+}

@@ -22,7 +22,6 @@ var main = new function main() {
 	    
         initCache();
         initThree();
-        initControls();
         registerEvents();
         
         //Render
@@ -51,18 +50,13 @@ var main = new function main() {
     var render = function() {	    
 	    if(isRendering) {
 		    meter.tickStart();
-		    
-		    //Animate squares
-            self.scene.traverse(function (e) {
-                if (e instanceof THREE.Mesh && e != mesh.plane) {
-                    e.rotation.x += controls.rotationSpeed;
-                    e.rotation.y += controls.rotationSpeed;
-                    e.rotation.z += controls.rotationSpeed;
-                }
-            });
+
+			self.geom.verticesNeedUpdate = true;
+            self.geom.computeFaceNormals();
+
 		    
 		    self.renderer.render(self.scene, self.camera);
-		    
+		    		    
 			requestAnimationFrame(render);
 			
 			meter.tick();
@@ -86,18 +80,21 @@ var main = new function main() {
 				
 		//Guides
 		var axes = new THREE.AxisHelper( 20 );
-		//self.scene.add(axes);
+		self.scene.add(axes);
 		
 		//Mesh
 		self.planeGeometry = new THREE.PlaneGeometry(60, 40, 1, 1);
 		var planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
 		mesh.plane = new THREE.Mesh(self.planeGeometry,planeMaterial);
+		mesh.plane.name = "Plane";
 		mesh.plane.receiveShadow = true;
 		mesh.plane.rotation.x = -0.5*Math.PI;
 		mesh.plane.position.x = 0;
 		mesh.plane.position.y = 0;
 		mesh.plane.position.z = 0;
 		self.scene.add(mesh.plane);
+		
+		self.scene.add(customMesh());
 		
 		//Position Camera
 		self.camera.position.x = -30;
@@ -113,62 +110,80 @@ var main = new function main() {
         spotLight.position.set(-40, 60, -10);
         spotLight.castShadow = true;
         self.scene.add(spotLight);
-        
-        //Fog
-        //self.scene.fog = new THREE.FogExp2( 0xffffff, 0.015 );
-        
-        //Override Material All Meshes
-        //self.scene.overrideMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
-		
+
 		
 		//Print the output
 		cache.webgl.html(self.renderer.domElement);
     };
     
-    var initControls = function () {
-	    controls.rotationSpeed = 0.02;
-	    controls.numberOfObjects = self.scene.children.length;
-	    
-	    controls.removeCube = removeCube;
+    var customMesh = function () {
+	    var vertices = [
+            new THREE.Vector3(1, 3, 1),
+            new THREE.Vector3(1, 3, -1),
+            new THREE.Vector3(1, -1, 1),
+            new THREE.Vector3(1, -1, -1),
+            new THREE.Vector3(-1, 3, -1),
+            new THREE.Vector3(-1, 3, 1),
+            new THREE.Vector3(-1, -1, -1),
+            new THREE.Vector3(-1, -1, 1)
+        ];
+        
+        //Add control for each vertices
+        controls.vertices = [];
+        vertices.forEach(function(element, index) {
+	         controls.vertices.push({x : element['x'], y : element['y'], z : element['z']});
+        });
 
-        controls.addCube = addCube;
-
-        controls.outputObjects = function () {console.log(self.scene.children);};
-	    
+        var faces = [
+            new THREE.Face3(0, 2, 1),
+            new THREE.Face3(2, 3, 1),
+            new THREE.Face3(4, 6, 5),
+            new THREE.Face3(6, 7, 5),
+            new THREE.Face3(4, 5, 1),
+            new THREE.Face3(5, 0, 1),
+            new THREE.Face3(7, 6, 2),
+            new THREE.Face3(6, 3, 2),
+            new THREE.Face3(5, 7, 0),
+            new THREE.Face3(7, 2, 0),
+            new THREE.Face3(1, 3, 4),
+            new THREE.Face3(3, 6, 4),
+        ];
+        
+        self.geom = new THREE.Geometry();
+		self.geom.vertices = vertices;
+		self.geom.faces = faces;
+		self.geom.computeFaceNormals();
+		
+		var materials = [
+            new THREE.MeshLambertMaterial({opacity: 0.6, color: 0x44ff44, transparent: true}),
+            new THREE.MeshBasicMaterial({color: 0x000000, wireframe: true})
+        ];
+        
+        mesh.custom = THREE.SceneUtils.createMultiMaterialObject(self.geom, materials);
+        mesh.custom.name = "Custom";
+        
+        mesh.custom.position.x = 0;
+		mesh.custom.position.y = 2;
+		mesh.custom.position.z = 0;
+                
+        mesh.custom.children.forEach(function (e) {
+	        e.name = "Custom";
+            e.castShadow = true;
+        });
+		
+        initControls();
+        
+        return mesh.custom;
+    };
+    
+    var initControls = function () {	    
 	    self.gui = new dat.GUI();
-		self.gui.add(controls, 'rotationSpeed', 0, 0.5);
-        self.gui.add(controls, 'addCube');
-        self.gui.add(controls, 'removeCube');
-        self.gui.add(controls, 'outputObjects');
-        self.gui.add(controls, 'numberOfObjects').listen();
-    };
-    
-    var removeCube = function () {
-	    var allChildren = self.scene.children;
-        var lastObject = allChildren[allChildren.length - 1];
-        if (lastObject instanceof THREE.Mesh) {
-            self.scene.remove(lastObject);
-            controls.numberOfObjects = self.scene.children.length;
+	    
+	    for (var i = 0; i < controls.vertices.length; i++) {
+            var f = self.gui.addFolder('Vertices ' + (i + 1));
+            f.add(self.geom.vertices[i], 'x', -10, 10);
+            f.add(self.geom.vertices[i], 'y', -10, 10);
+            f.add(self.geom.vertices[i], 'z', -10, 10);
         }
-    };
-    
-    var addCube = function () {
-	    var cubeSize = Math.ceil((Math.random() * 3));
-        var cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-        var cubeMaterial = new THREE.MeshLambertMaterial({color: Math.random() * 0xffffff});
-        var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-        cube.castShadow = true;
-        cube.name = "cube-" + self.scene.children.length;
-
-
-        // position the cube randomly in the scene
-
-        cube.position.x = -30 + Math.round((Math.random() * self.planeGeometry.parameters.width));
-        cube.position.y = Math.round((Math.random() * 5));
-        cube.position.z = -20 + Math.round((Math.random() * self.planeGeometry.parameters.height));
-
-        // add the cube to the scene
-        self.scene.add(cube);
-        controls.numberOfObjects = self.scene.children.length;
     };
 };

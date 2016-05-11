@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type="text/javascript" src="js/three.min.js"></script>
+
+    <script type="text/javascript">
+
+    'use strict';
+
+    var scene, camera, renderer,
+        previousTime    = Date.now(),
+        currentTime     = Date.now(),
+        dt              = 0,
+        meshes          = [];
+
+    var init = function(){
+        initScene();
+        createCube();
+        render();
+    };
+
+    var initScene = function(){
+        scene    = new THREE.Scene();
+        camera   = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+        renderer = new THREE.WebGLRenderer();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
+
+        camera.position.z = 5;
+    };
+
+    var createCube = function(){
+        var geometry = new THREE.BoxGeometry(1, 1, 1);
+        var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe:true });
+        var cube     = new THREE.Mesh(geometry, material);
+            cube.userData.velocity      = new THREE.Vector3(0, 0, 0);
+            cube.userData.acceleration  = new THREE.Vector3(0, 0.000001, 0);
+        scene.add(cube);
+        meshes.push(cube);
+    };
+
+    function render() {
+        requestAnimationFrame(render);
+
+        currentTime     = Date.now();
+        dt              = currentTime - previousTime;
+        previousTime    = currentTime;
+        simulate(dt);
+
+        renderer.render(scene,camera);
+    };
+
+    var simulate = function(dt){
+        var velocity     = new THREE.Vector3(),
+            acceleration = new THREE.Vector3();
+        for(var i=0; i<meshes.length; i++){
+            velocity.copy(meshes[i].userData.velocity);
+            acceleration.copy(meshes[i].userData.acceleration);
+
+            velocity.multiplyScalar(dt);
+            acceleration.multiplyScalar(dt);
+
+            meshes[i].position.add(velocity);
+            meshes[i].userData.velocity.add(acceleration);
+            
+        }
+    };
+
+    window.onload = init;
+
+    </script>
+</head>
+
+<body></body>
+</html>

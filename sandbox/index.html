@@ -3,7 +3,21 @@
 
 <head>
     <script type="text/javascript" src="../libs/three.min.js"></script>
-
+	
+	<style type="text/css">
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		
+		html, body {
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			background-color: #fff;
+		}
+	</style> 
+	
     <script type="text/javascript">
 
     'use strict';
@@ -13,6 +27,11 @@
         currentTime     = Date.now(),
         dt              = 0,
         meshes          = [];
+        
+    var angle = 1.57;
+    var planW = 50;
+    var planH = 50;
+    var espacement = 5;
 
     var init = function(){
         initScene();
@@ -20,7 +39,8 @@
 
     var initScene = function(){
         	scene = new THREE.Scene();
-			camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.001, 900000);
+        	scene.fog = new THREE.FogExp2( 0x000000, 0.005 );
+			camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 900000);
 
 			var directionalLight = new THREE.PointLight(0xff0000, 0.5, 90000 );
 			directionalLight.position.set( 20, 10, 10 );
@@ -28,17 +48,51 @@
 			scene.add( directionalLight );
 
 			renderer = new THREE.WebGLRenderer();
-			renderer.setClearColor(0xffffff, 1.0);
+			renderer.setClearColor(0x000000, 1.0);
 			renderer.setSize(window.innerWidth, window.innerHeight);
 			document.body.appendChild(renderer.domElement);
-
-			//var mygeometry = new THREE.CubeGeometry(1,1,1);
-			//var material = new THREE.MeshPhongMaterial({color: 0x00ff00});
-			//var cube = new THREE.Mesh(geometry, material);
-			//scene.add(cube);
 			
-			var geometry = new THREE.TorusGeometry( 10, 10, .5, 200, Math.PI * 2);
-			console.log(geometry.vertices)
+			var geometry = new THREE.PlaneGeometry(planW, planH);
+			var material = new THREE.MeshBasicMaterial( {color: 0xff0000, transparent: true, opacity: 0.2, fog: false} );
+			meshes.plane = new THREE.Mesh( geometry, material );
+			scene.add( meshes.plane );
+			
+			var nbrW = Math.round(planW/espacement)*4;
+			var nbrH = Math.round(planH/espacement)*4;
+			var particleCount = nbrW*nbrH;
+			var pgeometry = new THREE.Geometry();
+			var pmaterial = new THREE.PointsMaterial( { size: 2, color: 0xffffff, transparent: true, fog: true} );
+			
+			var currX = 0, currY = 0;
+			
+			for (var p = 0; p < particleCount; p++) {
+
+			  if(currX>nbrW) {
+			  	currX = 0;
+			  }
+			  else {
+			  	currX = currX + 1;
+			  }
+			  
+			  var pX = currX*espacement - planW*2 + 55,
+			      pY = currY*espacement - planH*2 + 70,
+			      pZ = -1,
+			      particle = new THREE.Vector3(pX, pY, pZ);
+			
+			  if(currX==nbrW) {
+			  	currY = currY + 1;
+			  }
+		
+			  pgeometry.vertices.push(particle);
+			  
+			}
+			
+			particles = new THREE.Points( pgeometry, pmaterial );
+			scene.add( particles );
+			
+/*
+			//var geometry = new THREE.TorusGeometry( 10, 10, .5, 200, Math.PI * 2);
+			var geometry = new THREE.TorusGeometry( 10, 3, 16, 100 );
 			var vertices = geometry.vertices;
 					for( var v = 0; v < vertices.length; v++ ) {
 							vertices[v].x += (Math.random()*5);
@@ -49,14 +103,18 @@
 							vertices[v].z -= (Math.random()*2);
 					}
 			var material = new THREE.MeshPhongMaterial({shading: THREE.SmoothShading, blending: THREE.AdditiveBlending, transparent: true, color: 0x0000ff, specular: 0x000000, shininess: 1, vertexColors: false});
+			//var material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+			//var material = new THREE.MeshPhongMaterial({ color: 0xdddddd, specular: 0x009900, shininess: 30, shading: THREE.FlatShading });
 			mesh = new THREE.Mesh( geometry, material );
 			scene.add( mesh );
 			
-			var material = new THREE.PointsMaterial( { size: 1, transparent: true, vertexColors: true  } );
+			var material = new THREE.PointsMaterial( { size: 5, transparent: true, vertexColors: true  } );
 			particles = new THREE.Points( geometry, material );
 			scene.add( particles );
+*/
 
-			camera.position.z = 100;
+
+			camera.position.z = 300;
 
 			render();
     };
@@ -64,10 +122,15 @@
     function render() {
         requestAnimationFrame(render);
         
-        mesh.rotation.x += 0.01;
-		mesh.rotation.y += 0.01;
-        particles.rotation.x += 0.01;
-		particles.rotation.y += 0.01;
+        if(meshes.plane.rotation.y < angle) {
+	        angle = 1.57;
+       		meshes.plane.rotation.y += 0.005;
+       		particles.rotation.y += 0.005;
+        } else {
+	        angle = 0;
+	        meshes.plane.rotation.y -= 0.005;
+	        particles.rotation.y -= 0.005;
+        }
 
         renderer.render(scene,camera);
     };

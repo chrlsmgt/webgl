@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type="text/javascript" src="../libs/three.min.js"></script>
+
+    <script type="text/javascript">
+
+    'use strict';
+
+    var scene, camera, renderer, mesh, particles,
+        previousTime    = Date.now(),
+        currentTime     = Date.now(),
+        dt              = 0,
+        meshes          = [];
+
+    var init = function(){
+        initScene();
+    };
+
+    var initScene = function(){
+        	scene = new THREE.Scene();
+			camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.001, 900000);
+
+			var directionalLight = new THREE.PointLight(0xff0000, 0.5, 90000 );
+			directionalLight.position.set( 20, 10, 10 );
+			directionalLight.rotationAutoUpdate = true;
+			scene.add( directionalLight );
+
+			renderer = new THREE.WebGLRenderer();
+			renderer.setClearColor(0xffffff, 1.0);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.body.appendChild(renderer.domElement);
+
+			//var mygeometry = new THREE.CubeGeometry(1,1,1);
+			//var material = new THREE.MeshPhongMaterial({color: 0x00ff00});
+			//var cube = new THREE.Mesh(geometry, material);
+			//scene.add(cube);
+			
+			var geometry = new THREE.TorusGeometry( 10, 10, .5, 200, Math.PI * 2);
+			console.log(geometry.vertices)
+			var vertices = geometry.vertices;
+					for( var v = 0; v < vertices.length; v++ ) {
+							vertices[v].x += (Math.random()*5);
+							vertices[v].x -= (Math.random()*5);
+							vertices[v].y += (Math.random()*2);
+							vertices[v].y -= (Math.random()*2);
+							vertices[v].z += (Math.random()*2);
+							vertices[v].z -= (Math.random()*2);
+					}
+			var material = new THREE.MeshPhongMaterial({shading: THREE.SmoothShading, blending: THREE.AdditiveBlending, transparent: true, color: 0x0000ff, specular: 0x000000, shininess: 1, vertexColors: false});
+			mesh = new THREE.Mesh( geometry, material );
+			scene.add( mesh );
+			
+			var material = new THREE.PointsMaterial( { size: 1, transparent: true, vertexColors: true  } );
+			particles = new THREE.Points( geometry, material );
+			scene.add( particles );
+
+			camera.position.z = 100;
+
+			render();
+    };
+
+    function render() {
+        requestAnimationFrame(render);
+        
+        mesh.rotation.x += 0.01;
+		mesh.rotation.y += 0.01;
+        particles.rotation.x += 0.01;
+		particles.rotation.y += 0.01;
+
+        renderer.render(scene,camera);
+    };
+
+    window.onload = init;
+
+    </script>
+</head>
+
+<body style="background-color: #fff;"></body>
+</html>

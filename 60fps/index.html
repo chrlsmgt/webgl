@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - particles - sprites</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<link rel="stylesheet" href="./style.css">
+
+		<!-- Vendor -->
+		<script src="../libs/jquery-3.2.1.min.js"></script>
+		<script src="../libs/detector.js"></script>
+	    <script src="../libs/fpsmeter.js"></script>
+		<script src="../libs/dat.gui.js"></script>
+
+		<!-- Gmx -->
+		<script src="../libs/ShaderLoader.js"></script>
+		<script src="../libs/TextureHelper.js"></script>
+
+		<!-- Three -->
+	    <script src="../libs/three.min.js"></script>
+		<script src="../libs/OrbitControls.js"></script>
+		<script src="../libs/GPUComputationRenderer.js"></script>
+
+		<!-- Project -->
+		<script src="./js/gpgpu.js"></script>
+	    <script src="./js/main.js"></script>
+
+        <script type="x-shader/x-fragment" data-src="shaders/points.frag" data-name="points"></script>
+        <script type="x-shader/x-vertex" data-src="shaders/points.vert" data-name="points"></script>
+        <script type="x-shader/x-fragment" data-src="shaders/displacement.frag" data-name="displacement"></script>
+	</head>
+	<body>
+		<script type="text/javascript">
+		    $(document).ready(function() {
+				SHADER_LOADER.load(function(shaders) {
+					SHADER_LOADER.shaders = shaders;
+					main.init();
+				});
+			});
+		</script>
+	</body>
+</html>

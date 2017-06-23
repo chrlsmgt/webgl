@@ -15,11 +15,18 @@ var main = new function main() {
 	var isRendering = true;
 
 	var nbCol = 75;
-	var nbRow = 150;
+	var nbRow = 200;
 	var points = [];
 
 	//Controls
-    var controls = {size : 5, displacementAmplitude: 50.0, spotLightX : 0, spotLightY : 0, spotLightZ : 500};
+    var controls = {
+					size : 3,
+					displacementAmplitude: 50.0,
+					spotLightX : 0,
+					spotLightY : 0,
+					spotLightZ : 100,
+					noise3D : true
+				};
 
 
     /************************************/
@@ -133,18 +140,18 @@ var main = new function main() {
 
 		scene.add(new THREE.AxisHelper(1000));
 
-		spotLight = new THREE.SpotLight( 0xff0000 );
-		spotLight.position.set( controls.spotLightX, controls.spotLightY, controls.spotLightZ );
-		scene.add( spotLight );
-
-		spotLightHelper = new THREE.SpotLightHelper( spotLight );
-		scene.add( spotLightHelper );
+		// spotLight = new THREE.SpotLight( 0xff0000 );
+		// spotLight.position.set( controls.spotLightX, controls.spotLightY, controls.spotLightZ );
+		// scene.add( spotLight );
+		//
+		// spotLightHelper = new THREE.SpotLightHelper( spotLight );
+		// scene.add( spotLightHelper );
 
 		var particles = nbCol*nbRow;
 		var w = context.canvas.width, w2 = w / 2; // particles spread in the cube
 		var h = context.canvas.height, h2 = h / 2; // particles spread in the cube
 
-		// Test points
+		// Adds 60fps points
 		for ( var i = 0; i < particles; i += 1 ) {
 			var u = (i%nbCol)/nbCol;
 			var v = (i/nbCol|0)/nbRow;
@@ -158,6 +165,16 @@ var main = new function main() {
 			// Canvas validation
 			var canvasPxIndex = 4 * (Math.floor(x) + Math.floor(y) * context.canvas.width);
 			if(imageData.data[canvasPxIndex] > 0) points.push(p);
+		}
+
+		// Adds random points
+		for ( var i = 0; i < 1000; i += 1 ) {
+			var vertex = new THREE.Vector3();
+			vertex.x = Math.random() * 1000 - 5000;
+			vertex.y = Math.random() * 1000 - 5000;
+			vertex.z = Math.random()* (-10 - 0) + 0;
+			console.log(vertex.z);
+			points.push(vertex);
 		}
 
 		var geometry = new THREE.BufferGeometry();
@@ -235,11 +252,10 @@ var main = new function main() {
 		_textureHelper = TextureHelper(renderer, 200, 200, 0, 0);
 
 		material.uniforms.map.value = texture;
-		material.uniforms.size.value = controls.size;
-		material.uniforms.displacementAmplitude.value = controls.displacementAmplitude;
 		material.uniforms.textureWidth.value = _gpgpu.width;
 
 		initControls();
+		updateControls();
 		animate();
     };
 
@@ -251,23 +267,21 @@ var main = new function main() {
 		orbit.maxDistance = 7500;
 
 	    self.gui = new dat.GUI();
-		self.gui.add(controls, 'size', 1, 10);
-		self.gui.add(controls, 'displacementAmplitude', 1, 100);
+		self.gui.add(controls, 'size', 1, 10).onChange(updateControls);
+		self.gui.add(controls, 'displacementAmplitude', 1, 100).onChange(updateControls);
 
-		self.gui.add(controls, 'spotLightX', 0, 100);
-		self.gui.add(controls, 'spotLightY', 0, 100);
-		self.gui.add(controls, 'spotLightZ', 0, 100);
+		self.gui.add(controls, 'noise3D').onChange(updateControls);
     };
 
-	var render = function() {
-		//Set Values
-		// spotLight.position.set( controls.spotLightX, controls.spotLightY, controls.spotLightZ );
-		// spotLight.lookAt(new THREE.Vector3(0, 0, 0));
-		// spotLight.updateMatrix();
-
+	var updateControls = function() {
 		material.uniforms.size.value = controls.size;
 		material.uniforms.displacementAmplitude.value = controls.displacementAmplitude;
 
+		_gpgpu.uniforms.noise2DFactor.value = controls.noise2D ? 0 : 1.0;
+		_gpgpu.uniforms.noise3DFactor.value = controls.noise3D ? 1.0 : 0;
+	};
+
+	var render = function() {
 		_gpgpu.render(window.performance.now()/1000 / 10);
 		var t = _gpgpu.getTexture();
 		material.uniforms.displacementTexture.value = t;

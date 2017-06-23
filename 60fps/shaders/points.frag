@@ -1,5 +1,8 @@
 uniform vec3 diffuse;
 uniform float opacity;
+
+varying float vOpacity;
+
 #include <common>
 #include <packing>
 #include <color_pars_fragment>
@@ -11,7 +14,11 @@ uniform float opacity;
 void main() {
 	#include <clipping_planes_fragment>
 	vec3 outgoingLight = vec3( 0.0 );
-	vec4 diffuseColor = vec4( diffuse, opacity );
+
+	// float newOpacity = (vOpacity*opacity)+ 0.6;
+	float newOpacity = opacity;
+	vec4 diffuseColor = vec4( diffuse, newOpacity );
+
 	#include <logdepthbuf_fragment>
 	#include <map_particle_fragment>
 	#include <color_fragment>

@@ -32,9 +32,13 @@ var gpgpu = function(webglRenderer, points, cWidth, cHeight){
     renderer.setVariableDependencies(displacementVariable, [displacementVariable]);
 
     //Uniforms
-    var displacementUniforms = displacementVariable.material.uniforms;
-        displacementUniforms.time               = { type:'f', value: 0};
+    console.log(displacementVariable.material);
+    var displacementUniforms = displacementVariable.material.uniforms,
+        displacementDefines = displacementVariable.material.defines;
+        displacementUniforms.time = { type:'f', value: 0};
         displacementUniforms.texturePosition = {type: 't', value: texturePosition};
+        displacementUniforms.noise2DFactor = { type:'f', value: 0};
+        displacementUniforms.noise3DFactor = { type:'f', value: 1.0};
 
     var error = renderer.init();
     if(error !== null){
@@ -44,6 +48,7 @@ var gpgpu = function(webglRenderer, points, cWidth, cHeight){
     var _public = {
         width:width,
         uniforms:displacementUniforms,
+        defines: displacementDefines,
         render:function(time){
             displacementUniforms.time.value          = time;
             renderer.compute();

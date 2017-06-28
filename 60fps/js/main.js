@@ -7,7 +7,7 @@ var main = new function main() {
 
 	var container, stats;
 	var camera, scene, renderer, particles, geometry, material, parameters, i, h, color, sprite, size;
-	var spotLight, spotLightHelper;
+	var spotLight1, spotLight2, spotLight1Helper;
 	var mouseX = 0, mouseY = 0;
 	var windowHalfX = 0, windowHalfY = 0;
 	var _gpgpu, _textureHelper;
@@ -18,16 +18,19 @@ var main = new function main() {
 	var nbRow = 200;
 	var points = [];
 
+
 	//Controls
     var controls = {
-					size : 3,
-					displacementAmplitude: 50.0,
-					spotLightX : 0,
-					spotLightY : 0,
-					spotLightZ : 100,
-					noise3D : true
-				};
-
+    		size : 3,
+    		displacementAmplitude: 50.0,
+    		spotLight1X : -500,
+    		spotLight1Y : 0,
+    		spotLight1Z : 520,
+            spotLight2X : 500,
+            spotLight2Y : 0,
+            spotLight2Z : 520,
+    		noise3D : true
+    	};
 
     /************************************/
     /* DEFAULT                          */
@@ -125,7 +128,7 @@ var main = new function main() {
 		  initThree();
         };
 
-        imageObj.src = 'http://192.168.0.15/webgl/60fps/textures/60fps.png';
+        imageObj.src = 'textures/60fps.png';
 	};
 
     var initThree = function () {
@@ -140,12 +143,34 @@ var main = new function main() {
 
 		scene.add(new THREE.AxisHelper(1000));
 
-		// spotLight = new THREE.SpotLight( 0xff0000 );
-		// spotLight.position.set( controls.spotLightX, controls.spotLightY, controls.spotLightZ );
-		// scene.add( spotLight );
-		//
-		// spotLightHelper = new THREE.SpotLightHelper( spotLight );
-		// scene.add( spotLightHelper );
+		spotLight1 = new THREE.SpotLight(
+            0x4a3000,   //color
+            1,          //intensity
+            0,          //distance
+            Math.PI/3,  //angle,
+            0.5,       //penumbra
+            1           //decay
+        );
+        spotLight2 = new THREE.SpotLight(
+            0x0000ff,   //color
+            1,          //intensity
+            0,          //distance
+            Math.PI/3,  //angle,
+            0.5,       //penumbra
+            1           //decay
+        );
+        spotLight1.position.set( controls.spotLight1X, controls.spotLight1Y, controls.spotLight1Z );
+		spotLight2.position.set( controls.spotLight2X, controls.spotLight2Y, controls.spotLight2Z );
+        spotLight1.target.position.set(controls.spotLight1X, controls.spotLight1Y, 0);
+        spotLight2.target.position.set(controls.spotLight2X, controls.spotLight2Y, 0);
+        scene.add( spotLight1.target );
+        scene.add( spotLight2.target );
+        scene.add( spotLight1 );
+        scene.add( spotLight2 );
+
+
+		// spotLight1Helper = new THREE.SpotLightHelper( spotLight1 );
+		// scene.add( spotLight1Helper );
 
 		var particles = nbCol*nbRow;
 		var w = context.canvas.width, w2 = w / 2; // particles spread in the cube
@@ -168,20 +193,20 @@ var main = new function main() {
 		}
 
 		// Adds random points
-		for ( var i = 0; i < 1000; i += 1 ) {
+		for ( var i = 0; i < 200; i += 1 ) {
 			var vertex = new THREE.Vector3();
-			vertex.x = Math.random() * 1000 - 5000;
-			vertex.y = Math.random() * 1000 - 5000;
-			vertex.z = Math.random()* (-10 - 0) + 0;
-			console.log(vertex.z);
+
+			vertex.x = THREE.Math.randFloatSpread(1000);
+			vertex.y = THREE.Math.randFloatSpread(1000);
+			vertex.z = THREE.Math.randFloatSpread(1000);
 			points.push(vertex);
 		}
 
 		var geometry = new THREE.BufferGeometry();
 
 		var positions = new Float32Array( points.length * 3 );
-		var colors = new Float32Array( points.length * 3 );
-		var pIndexes = new Float32Array( points.length);
+		var colors    = new Float32Array( points.length * 3 );
+		var pIndexes  = new Float32Array( points.length);
 
 		var color = new THREE.Color();
 
@@ -203,6 +228,7 @@ var main = new function main() {
 			colors[ i ]     = color.r;
 			colors[ i + 1 ] = color.g;
 			colors[ i + 2 ] = color.b;
+
 		}
 
 		// Add attribute default
@@ -228,7 +254,8 @@ var main = new function main() {
 		        }
 		    ]),
 		    defines: {
-		        USE_MAP: ""
+		        USE_MAP: "",
+                NB_LIGHTS: 2
 		    },
 
 			vertexShader: SHADER_LOADER.shaders.points.vertex,
@@ -257,6 +284,7 @@ var main = new function main() {
 		initControls();
 		updateControls();
 		animate();
+
     };
 
 	var initControls = function () {
@@ -271,6 +299,30 @@ var main = new function main() {
 		self.gui.add(controls, 'displacementAmplitude', 1, 100).onChange(updateControls);
 
 		self.gui.add(controls, 'noise3D').onChange(updateControls);
+
+        var f1 = self.gui.addFolder('Lights 1');
+            f1.add(spotLight1, "visible");
+            f1.addThreeColor(spotLight1, "color");
+            f1.add(spotLight1, "intensity");
+            f1.add(spotLight1, "distance");
+            f1.add(spotLight1, "angle", 0, Math.PI/2).step(0.01);
+            f1.add(spotLight1, "penumbra", 0, 1).step(0.01);
+            f1.add(spotLight1, "decay");
+            f1.add(spotLight1.position, "x");
+            f1.add(spotLight1.position, "y");
+            f1.add(spotLight1.position, "z");
+
+        var f1 = self.gui.addFolder('Lights 2');
+            f1.add(spotLight2, "visible");
+            f1.addThreeColor(spotLight2, "color");
+            f1.add(spotLight2, "intensity");
+            f1.add(spotLight2, "distance");
+            f1.add(spotLight2, "angle", 0, Math.PI/2).step(0.01);
+            f1.add(spotLight2, "penumbra", 0, 1).step(0.01);
+            f1.add(spotLight2, "decay");
+            f1.add(spotLight2.position, "x");
+            f1.add(spotLight2.position, "y");
+            f1.add(spotLight2.position, "z");
     };
 
 	var updateControls = function() {
